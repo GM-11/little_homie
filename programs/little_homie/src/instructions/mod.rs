@@ -1,3 +1,3 @@
-pub mod initialize;
+pub mod init_coin;
 
-pub use initialize::*;
+pub use init_coin::*;

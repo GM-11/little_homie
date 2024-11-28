@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-little_homie = "7eFJtns9jVmfi6mPMMykkCfVX2o5R5prrMRgRfKAdoCk"
+little_homie = "D2Vi2g5mVdhS5XmR9UfKxrZfyu1RuxTSKcZMKsQmyURP"
 
 [registry]
 url = "https://api.apr.dev"
