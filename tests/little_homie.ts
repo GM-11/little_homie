@@ -10,6 +10,10 @@ import {
 } from "@solana/spl-token";
 import { LittleHomie } from "../target/types/little_homie";
 
+const isToken2022 = true;
+
+const tokenProgram = isToken2022 ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID;
+
 const name = "Homer NFT";
 const symbol = "HOMR";
 const uri =
@@ -29,45 +33,101 @@ describe("little_homie", () => {
     [Buffer.from("metadata"), mplID.toBuffer(), coinMint.publicKey.toBuffer()],
     mplID
   );
-  const [masterEdition] = anchor.web3.PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("metadata"),
-      mplID.toBuffer(),
-      coinMint.publicKey.toBuffer(),
-      Buffer.from("edition"),
-    ],
-    mplID
-  );
 
   it("Init new coin", async () => {
     const wallet = await getKeypairFromFile("~/.config/solana/id.json");
 
-    const [coinTokenAccount] = anchor.web3.PublicKey.findProgramAddressSync(
+    const [coinState] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("coin_state"), coinMint.publicKey.toBuffer()],
+      program.programId
+    );
+
+    const [coinStateAta] = anchor.web3.PublicKey.findProgramAddressSync(
       [
-        wallet.publicKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
+        coinState.toBuffer(),
+        tokenProgram.toBuffer(),
         coinMint.publicKey.toBuffer(),
       ],
       ASSOCIATED_TOKEN_PROGRAM_ID
     );
 
-    const tx = await program.methods
-      .initCoin(name, symbol, uri)
-      .accountsPartial({
-        payer: wallet.publicKey,
-        coinMint: coinMint.publicKey,
-        coinTokenAccount,
-        metadata,
-        masterEdition,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        metadataProgram: mplID,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      })
-      .signers([wallet, coinMint])
-      .rpc();
-    console.log("Your transaction signature", tx);
-    console.log("Coin Mint", coinMint.publicKey.toBase58());
+    const [userAta] = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        wallet.publicKey.toBuffer(),
+        tokenProgram.toBuffer(),
+        coinMint.publicKey.toBuffer(),
+      ],
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+
+    try {
+      const tx = await program.methods
+        .initCoin(
+          name,
+          symbol,
+          uri,
+          new anchor.BN(100),
+          new anchor.BN(1),
+          new anchor.BN(1)
+        )
+        .accountsPartial({
+          payer: wallet.publicKey,
+          coinMint: coinMint.publicKey,
+          userAta,
+          coinState,
+          metadata,
+          tokenProgram,
+          // coinStateAta,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          metadataProgram: mplID,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        })
+        .signers([wallet, coinMint])
+        .rpc();
+      console.log("Your transaction signature:", tx);
+      console.log("Coin Mint:", coinMint.publicKey.toBase58());
+      console.log("Coin State Account:", coinState.toBase58());
+    } catch (e) {
+      console.log("Coin Mint:", coinMint.publicKey.toBase58());
+      console.log("Coin State Account:", coinState.toBase58());
+      console.log("User ATA:", userAta.toBase58());
+
+      console.log(e);
+    }
   });
+
+  // it("Buy coin from wallet 1", async () => {
+  //   const wallet1 = await getKeypairFromFile("./wallets/wallet1.json");
+
+  //   const [coinTokenAccount] = anchor.web3.PublicKey.findProgramAddressSync(
+  //     [
+  //       wallet1.publicKey.toBuffer(),
+  //       tokenProgram.toBuffer(),
+  //       coinMint.publicKey.toBuffer(),
+  //     ],
+  //     ASSOCIATED_TOKEN_PROGRAM_ID
+  //   );
+
+  //   const [coinState] = anchor.web3.PublicKey.findProgramAddressSync(
+  //     [Buffer.from("coin_state"), coinMint.publicKey.toBuffer()],
+  //     program.programId
+  //   );
+
+  //   const tx = await program.methods
+  //     .buyCoin(new anchor.BN(2))
+  //     .accountsPartial({
+  //       payer: wallet1.publicKey,
+  //       coinMint: coinMint.publicKey,
+  //       coinState,
+  //       coinTokenAccount,
+  //       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       systemProgram: anchor.web3.SystemProgram.programId,
+  //       tokenProgram,
+  //     })
+  //     .signers([wallet1])
+  //     .rpc();
+
+  //   console.log("Your transaction signature:", tx);
+  // });
 });
