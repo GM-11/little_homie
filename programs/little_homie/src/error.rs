@@ -19,4 +19,10 @@ pub enum LittleHomieError {
 
     #[msg("Coin is already pegged with stable coin")]
     CoinAlreadyPegged,
+
+    #[msg("Pegged coin and oracle feed do not match")]
+    OracleFeedMismatch,
+
+    #[msg("Invalid Stable Coin is provided")]
+    InvalidStableCoin,
 }

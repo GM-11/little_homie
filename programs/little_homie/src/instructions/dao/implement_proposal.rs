@@ -15,7 +15,7 @@ pub struct ImplementProposal<'info> {
 }
 
 impl<'info> ImplementProposal<'info> {
-    fn peg(&mut self, stable_coin: Pubkey) -> Result<()> {
+    fn peg(&mut self, stable_coin: String) -> Result<()> {
         msg!("Pegging with {:?}", stable_coin);
         self.coin_state.stable_coin = Some(stable_coin);
         Ok(())
@@ -37,8 +37,8 @@ impl<'info> ImplementProposal<'info> {
     pub fn implement_proposal(&mut self) -> Result<()> {
         msg!("Implementing proposal");
 
-        match self.proposal.proposal_type {
-            ProposalType::Peg(stable_coin) => self.peg(stable_coin),
+        match &self.proposal.proposal_type {
+            ProposalType::Peg(stable_coin) => self.peg(stable_coin.clone()),
             ProposalType::FreezeMint => self.freeze_mint(),
             ProposalType::Unpeg => self.unpeg(),
         }?;

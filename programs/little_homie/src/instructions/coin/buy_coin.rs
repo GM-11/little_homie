@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use anchor_lang::{
     prelude::*,
     solana_program::native_token::LAMPORTS_PER_SOL,
@@ -9,7 +11,7 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
-use crate::{CoinState, Decimal, COIN_STATE_SEED};
+use crate::{error::LittleHomieError, CoinState, Decimal, COIN_STATE_SEED};
 
 #[derive(Accounts)]
 pub struct BuyCoin<'info> {
@@ -76,8 +78,23 @@ impl<'info> BuyCoin<'info> {
         msg!("Transferring SOL");
 
         let amount_to_transfer: u64;
-        match self.coin_state.stable_coin {
+        match &self.coin_state.stable_coin {
             Some(stable_coin) => {
+                let description = chainlink_solana::description(
+                    self.chainlink_program.to_account_info(),
+                    self.chainlink_feed.to_account_info(),
+                )?;
+
+                msg!("{}", description);
+
+                let currency = description.split(" / ").nth(1).unwrap();
+
+                require!(
+                    String::from_str(currency).unwrap() == *stable_coin,
+                    LittleHomieError::OracleFeedMismatch
+                );
+                msg!("{}", stable_coin);
+
                 let round = chainlink_solana::latest_round_data(
                     self.chainlink_program.to_account_info(),
                     self.chainlink_feed.to_account_info(),
@@ -87,8 +104,6 @@ impl<'info> BuyCoin<'info> {
                     self.chainlink_program.to_account_info(),
                     self.chainlink_feed.to_account_info(),
                 )?;
-
-                msg!("{}", stable_coin);
 
                 let price = Decimal::new(round.answer, decimals as u32);
                 let sol_in_usd = price.to_u64();
@@ -137,8 +152,6 @@ impl<'info> BuyCoin<'info> {
             cpi_context,
             amount_to_mint.checked_mul(LAMPORTS_PER_SOL).unwrap(),
         )?;
-
-        // self.coin_mint.
 
         Ok(())
     }

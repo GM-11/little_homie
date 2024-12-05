@@ -24,7 +24,7 @@ pub mod little_homie {
         amount_for_user: u64,
         constant: u64,
         base_price_in_lamports: u64,
-        stable_coin: Option<Pubkey>,
+        stable_coin: Option<String>,
     ) -> Result<()> {
         ctx.accounts
             .init_state(constant, base_price_in_lamports, stable_coin, &ctx.bumps)?;

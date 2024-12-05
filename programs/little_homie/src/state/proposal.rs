@@ -15,7 +15,7 @@ pub struct Proposal {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, InitSpace)]
 pub enum ProposalType {
-    Peg(Pubkey),
+    Peg(#[max_len(5)] String),
     Unpeg,
     FreezeMint,
 }
