@@ -68,7 +68,7 @@ impl<'info> InitCoin<'info> {
         require!(constant > 0, LittleHomieError::InvalidConstant);
         if (stable_coin.is_some()) {
             require!(
-                stable_coin.unwrap().len() <= 5 && stable_coin.unwrap().len() >= 3,
+                stable_coin.clone().unwrap().len() <= 5 && stable_coin.clone().unwrap().len() >= 3,
                 LittleHomieError::InvalidStableCoin
             );
         }
