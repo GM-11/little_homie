@@ -70,7 +70,7 @@ impl<'info> InitCoin<'info> {
         self.coin_state.set_inner(CoinState {
             stable_coin,
             constant,
-            mint: self.coin_mint.key(),
+            coin_mint: self.coin_mint.key(),
             base_price_in_lamports,
             bump: bumps.coin_state,
         });
