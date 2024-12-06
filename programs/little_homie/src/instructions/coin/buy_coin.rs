@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use anchor_lang::{
     prelude::*,
     solana_program::native_token::LAMPORTS_PER_SOL,
@@ -11,7 +9,7 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
-use crate::{error::LittleHomieError, CoinState, Decimal, COIN_STATE_SEED, SOL_USDC_FEED};
+use crate::{CoinState, COIN_STATE_SEED, SOL_USDC_FEED};
 use switchboard_solana::AggregatorAccountData;
 
 #[derive(Accounts)]
@@ -84,39 +82,13 @@ impl<'info> BuyCoin<'info> {
 
         match self.coin_state.stable_coin {
             Some(stable_coin) => {
-                // let description = chainlink_solana::description(
-                //     self.chainlink_program.to_account_info(),
-                //     self.chainlink_feed.to_account_info(),
-                // )?;
-
-                // msg!("{}", description);
-
-                // let currency = description.split(" / ").nth(1).unwrap();
-
-                // // require!(
-                // //     String::from_str(currency).unwrap() == *stable_coin,
-                // //     LittleHomieError::OracleFeedMismatch
-                // // );
-                // msg!("{}", stable_coin);
-
-                // let round = chainlink_solana::latest_round_data(
-                //     self.chainlink_program.to_account_info(),
-                //     self.chainlink_feed.to_account_info(),
-                // )?;
-
-                // let decimals = chainlink_solana::decimals(
-                //     self.chainlink_program.to_account_info(),
-                //     self.chainlink_feed.to_account_info(),
-                // )?;
-
-                // let price = Decimal::new(round.answer, decimals as u32);
-                // let sol_in_usd = price.to_u64();
-                //
                 let feed = self.feed_aggregator.load()?;
 
                 let current_sol_price: f64 = feed.get_result()?.try_into()?;
                 let sol_in_usd = 1 as f64 / current_sol_price;
                 let sol_in_usd_lamports = (sol_in_usd * LAMPORTS_PER_SOL as f64) as u64;
+
+                msg!("{}", stable_coin);
 
                 amount_to_transfer = sol_in_usd_lamports;
             }

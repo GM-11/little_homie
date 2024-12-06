@@ -48,15 +48,6 @@ describe("little_homie", () => {
       program.programId
     );
 
-    const [coinStateAta] = anchor.web3.PublicKey.findProgramAddressSync(
-      [
-        coinState.toBuffer(),
-        tokenProgram.toBuffer(),
-        coinMint.publicKey.toBuffer(),
-      ],
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    );
-
     const [userAta] = anchor.web3.PublicKey.findProgramAddressSync(
       [
         wallet.publicKey.toBuffer(),
@@ -66,42 +57,34 @@ describe("little_homie", () => {
       ASSOCIATED_TOKEN_PROGRAM_ID
     );
 
-    try {
-      const tx = await program.methods
-        .initCoin(
-          name,
-          symbol,
-          uri,
-          new anchor.BN(100),
-          new anchor.BN(1),
-          new anchor.BN(1),
-          null
-        )
-        .accountsPartial({
-          payer: wallet.publicKey,
-          coinMint: coinMint.publicKey,
-          userAta,
-          coinState,
-          metadata,
-          tokenProgram,
+    const tx = await program.methods
+      .initCoin(
+        name,
+        symbol,
+        uri,
+        new anchor.BN(100),
+        new anchor.BN(1),
+        new anchor.BN(1),
+        null
+      )
+      .accountsPartial({
+        payer: wallet.publicKey,
+        coinMint: coinMint.publicKey,
+        userAta,
+        coinState,
+        metadata,
+        tokenProgram,
 
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-          metadataProgram: mplID,
-          systemProgram: anchor.web3.SystemProgram.programId,
-          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-        })
-        .signers([wallet, coinMint])
-        .rpc();
-      console.log("Your transaction signature:", tx);
-      console.log("Coin Mint:", coinMint.publicKey.toBase58());
-      console.log("Coin State Account:", coinState.toBase58());
-    } catch (e) {
-      console.log("Coin Mint:", coinMint.publicKey.toBase58());
-      console.log("Coin State Account:", coinState.toBase58());
-      console.log("User ATA:", userAta.toBase58());
-
-      console.log(e);
-    }
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        metadataProgram: mplID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      })
+      .signers([wallet, coinMint])
+      .rpc();
+    console.log("Your transaction signature:", tx);
+    console.log("Coin Mint:", coinMint.publicKey.toBase58());
+    console.log("Coin State Account:", coinState.toBase58());
   });
 
   it("Buy coin from wallet 1", async () => {
@@ -121,31 +104,23 @@ describe("little_homie", () => {
       program.programId
     );
 
-    try {
-      const tx = await program.methods
-        .buyCoin(new anchor.BN(2))
-        .accountsPartial({
-          payer: wallet1.publicKey,
-          coinMint: coinMint.publicKey,
-          coinState,
-          userAta,
-          feedAggregator: SOL_USDC_FEED,
-          // chainlinkProgram: new anchor.web3.PublicKey(
-          //   "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny"
-          // ),
-          // chainlinkFeed: new anchor.web3.PublicKey(
-          //   "CH31Xns5z3M1cTAbKW34jcxPPciazARpijcHj9rxtemt"
-          // ),
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-          systemProgram: anchor.web3.SystemProgram.programId,
-          tokenProgram,
-        })
-        .signers([wallet1])
-        .rpc();
+    const tx = await program.methods
+      .buyCoin(new anchor.BN(2))
+      .accountsPartial({
+        payer: wallet1.publicKey,
+        coinMint: coinMint.publicKey,
+        coinState,
+        userAta,
+        feedAggregator: SOL_USDC_FEED,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        tokenProgram,
+      })
+      .signers([wallet1])
+      .rpc();
 
-      console.log("Your transaction signature:", tx);
-    } catch (e) {
-      console.log(e);
-    }
+    console.log("Your transaction signature:", tx);
   });
+
+  it("get all holders of the coin", async () => {});
 });

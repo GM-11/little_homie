@@ -9,8 +9,9 @@ use anchor_spl::{
     token_2022::{burn, Burn},
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
+use switchboard_solana::AggregatorAccountData;
 
-use crate::{CoinState, COIN_STATE_SEED};
+use crate::{CoinState, COIN_STATE_SEED, SOL_USDC_FEED};
 
 #[derive(Accounts)]
 pub struct SellCoin<'info> {
@@ -43,6 +44,9 @@ pub struct SellCoin<'info> {
         associated_token::authority = payer,
     )]
     pub payer_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    #[account(address = SOL_USDC_FEED)]
+    pub feed_aggregator: AccountLoader<'info, AggregatorAccountData>,
 
     pub metadata_program: Program<'info, Metadata>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -90,10 +94,24 @@ impl<'info> SellCoin<'info> {
     pub fn transfer_sol(&mut self, amount_to_sell: u64) -> Result<()> {
         msg!("Transferring SOL");
 
-        // get supply of a token mint
+        let amount_to_transfer: u64;
 
-        let amount_to_transfer = self.calculate_price(amount_to_sell, self.coin_mint.supply);
+        match self.coin_state.stable_coin {
+            Some(stable_coin) => {
+                let feed = self.feed_aggregator.load()?;
 
+                let current_sol_price: f64 = feed.get_result()?.try_into()?;
+                let sol_in_usd = 1 as f64 / current_sol_price;
+                let sol_in_usd_lamports = (sol_in_usd * LAMPORTS_PER_SOL as f64) as u64;
+
+                msg!("{}", stable_coin);
+
+                amount_to_transfer = sol_in_usd_lamports;
+            }
+            None => {
+                amount_to_transfer = self.calculate_price(amount_to_sell, self.coin_mint.supply)
+            }
+        }
         let seeds = &[
             COIN_STATE_SEED.as_bytes().as_ref(),
             &self.coin_mint.key().to_bytes()[..],

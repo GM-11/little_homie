@@ -66,16 +66,11 @@ impl<'info> InitCoin<'info> {
         bumps: &InitCoinBumps,
     ) -> Result<()> {
         require!(constant > 0, LittleHomieError::InvalidConstant);
-        // if (stable_coin.is_some()) {
-        //     require!(
-        //         stable_coin.clone().unwrap().len() <= 5 && stable_coin.clone().unwrap().len() >= 3,
-        //         LittleHomieError::InvalidStableCoin
-        //     );
-        // }
 
         self.coin_state.set_inner(CoinState {
             stable_coin,
             constant,
+            mint: self.coin_mint.key(),
             base_price_in_lamports,
             bump: bumps.coin_state,
         });
