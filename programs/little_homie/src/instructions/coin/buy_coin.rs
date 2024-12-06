@@ -11,7 +11,8 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
-use crate::{error::LittleHomieError, CoinState, Decimal, COIN_STATE_SEED};
+use crate::{error::LittleHomieError, CoinState, Decimal, COIN_STATE_SEED, SOL_USDC_FEED};
+use switchboard_solana::AggregatorAccountData;
 
 #[derive(Accounts)]
 pub struct BuyCoin<'info> {
@@ -32,11 +33,13 @@ pub struct BuyCoin<'info> {
     #[account(mut)]
     pub coin_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// CHECK: We're reading data from this chainlink feed account
-    pub chainlink_feed: AccountInfo<'info>,
-    /// CHECK: This is the Chainlink program library
-    pub chainlink_program: AccountInfo<'info>,
+    #[account(address = SOL_USDC_FEED)]
+    pub feed_aggregator: AccountLoader<'info, AggregatorAccountData>,
 
+    // /// CHECK: We're reading data from this chainlink feed account
+    // pub chainlink_feed: AccountInfo<'info>,
+    // /// CHECK: This is the Chainlink program library
+    // pub chainlink_program: AccountInfo<'info>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -78,37 +81,44 @@ impl<'info> BuyCoin<'info> {
         msg!("Transferring SOL");
 
         let amount_to_transfer: u64;
-        match &self.coin_state.stable_coin {
+
+        match self.coin_state.stable_coin {
             Some(stable_coin) => {
-                let description = chainlink_solana::description(
-                    self.chainlink_program.to_account_info(),
-                    self.chainlink_feed.to_account_info(),
-                )?;
+                // let description = chainlink_solana::description(
+                //     self.chainlink_program.to_account_info(),
+                //     self.chainlink_feed.to_account_info(),
+                // )?;
 
-                msg!("{}", description);
+                // msg!("{}", description);
 
-                let currency = description.split(" / ").nth(1).unwrap();
+                // let currency = description.split(" / ").nth(1).unwrap();
 
-                require!(
-                    String::from_str(currency).unwrap() == *stable_coin,
-                    LittleHomieError::OracleFeedMismatch
-                );
-                msg!("{}", stable_coin);
+                // // require!(
+                // //     String::from_str(currency).unwrap() == *stable_coin,
+                // //     LittleHomieError::OracleFeedMismatch
+                // // );
+                // msg!("{}", stable_coin);
 
-                let round = chainlink_solana::latest_round_data(
-                    self.chainlink_program.to_account_info(),
-                    self.chainlink_feed.to_account_info(),
-                )?;
+                // let round = chainlink_solana::latest_round_data(
+                //     self.chainlink_program.to_account_info(),
+                //     self.chainlink_feed.to_account_info(),
+                // )?;
 
-                let decimals = chainlink_solana::decimals(
-                    self.chainlink_program.to_account_info(),
-                    self.chainlink_feed.to_account_info(),
-                )?;
+                // let decimals = chainlink_solana::decimals(
+                //     self.chainlink_program.to_account_info(),
+                //     self.chainlink_feed.to_account_info(),
+                // )?;
 
-                let price = Decimal::new(round.answer, decimals as u32);
-                let sol_in_usd = price.to_u64();
+                // let price = Decimal::new(round.answer, decimals as u32);
+                // let sol_in_usd = price.to_u64();
+                //
+                let feed = self.feed_aggregator.load()?;
 
-                amount_to_transfer = sol_in_usd;
+                let current_sol_price: f64 = feed.get_result()?.try_into()?;
+                let sol_in_usd = 1 as f64 / current_sol_price;
+                let sol_in_usd_lamports = (sol_in_usd * LAMPORTS_PER_SOL as f64) as u64;
+
+                amount_to_transfer = sol_in_usd_lamports;
             }
             None => {
                 amount_to_transfer = self.calculate_price(amount_to_mint, self.coin_mint.supply)

@@ -62,16 +62,16 @@ impl<'info> InitCoin<'info> {
         &mut self,
         constant: u64,
         base_price_in_lamports: u64,
-        stable_coin: Option<String>,
+        stable_coin: Option<Pubkey>,
         bumps: &InitCoinBumps,
     ) -> Result<()> {
         require!(constant > 0, LittleHomieError::InvalidConstant);
-        if (stable_coin.is_some()) {
-            require!(
-                stable_coin.clone().unwrap().len() <= 5 && stable_coin.clone().unwrap().len() >= 3,
-                LittleHomieError::InvalidStableCoin
-            );
-        }
+        // if (stable_coin.is_some()) {
+        //     require!(
+        //         stable_coin.clone().unwrap().len() <= 5 && stable_coin.clone().unwrap().len() >= 3,
+        //         LittleHomieError::InvalidStableCoin
+        //     );
+        // }
 
         self.coin_state.set_inner(CoinState {
             stable_coin,

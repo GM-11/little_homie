@@ -4,8 +4,7 @@ use anchor_lang::prelude::*;
 #[derive(InitSpace)]
 pub struct CoinState {
     pub constant: u64,
-    #[max_len(5)]
-    pub stable_coin: Option<String>,
+    pub stable_coin: Option<Pubkey>,
     pub base_price_in_lamports: u64,
     pub bump: u8,
 }

@@ -15,7 +15,7 @@ pub struct ImplementProposal<'info> {
 }
 
 impl<'info> ImplementProposal<'info> {
-    fn peg(&mut self, stable_coin: String) -> Result<()> {
+    fn peg(&mut self, stable_coin: Pubkey) -> Result<()> {
         msg!("Pegging with {:?}", stable_coin);
         self.coin_state.stable_coin = Some(stable_coin);
         Ok(())

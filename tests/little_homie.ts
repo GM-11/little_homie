@@ -37,7 +37,7 @@ describe("little_homie", () => {
     [Buffer.from("metadata"), mplID.toBuffer(), coinMint.publicKey.toBuffer()],
     mplID
   );
-  const SOL_USD_SWITCHBOARD_FEED = new anchor.web3.PublicKey(
+  const SOL_USDC_FEED = new anchor.web3.PublicKey(
     "GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR"
   );
   it("Init new coin", async () => {
@@ -129,12 +129,13 @@ describe("little_homie", () => {
           coinMint: coinMint.publicKey,
           coinState,
           userAta,
-          chainlinkProgram: new anchor.web3.PublicKey(
-            "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny"
-          ),
-          chainlinkFeed: new anchor.web3.PublicKey(
-            "CH31Xns5z3M1cTAbKW34jcxPPciazARpijcHj9rxtemt"
-          ),
+          feedAggregator: SOL_USDC_FEED,
+          // chainlinkProgram: new anchor.web3.PublicKey(
+          //   "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny"
+          // ),
+          // chainlinkFeed: new anchor.web3.PublicKey(
+          //   "CH31Xns5z3M1cTAbKW34jcxPPciazARpijcHj9rxtemt"
+          // ),
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
           tokenProgram,
