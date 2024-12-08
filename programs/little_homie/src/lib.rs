@@ -25,11 +25,12 @@ pub mod little_homie {
         constant: u64,
         base_price_in_lamports: u64,
         stable_coin: Option<Pubkey>,
+        rate: i16,
     ) -> Result<()> {
         ctx.accounts
             .init_state(constant, base_price_in_lamports, stable_coin, &ctx.bumps)?;
         ctx.accounts.transfer_lamports(base_price_in_lamports)?;
-        ctx.accounts.mint_to_user(amount_for_user)?;
+        ctx.accounts.mint_to_user(amount_for_user, rate)?;
         ctx.accounts.init_coin(name, symbol, uri)
     }
 

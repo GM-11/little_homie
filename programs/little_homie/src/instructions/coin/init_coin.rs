@@ -1,7 +1,7 @@
 use anchor_lang::{
     prelude::*,
     solana_program::native_token::LAMPORTS_PER_SOL,
-    system_program::{transfer, Transfer},
+    system_program::{create_account, transfer, CreateAccount, Transfer},
 };
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -9,8 +9,15 @@ use anchor_spl::{
         mpl_token_metadata::{instructions::CreateV1CpiBuilder, types::TokenStandard},
         Metadata,
     },
-    token_2022::{mint_to, MintTo},
-    token_interface::{Mint, TokenAccount, TokenInterface},
+    token_2022::{
+        mint_to,
+        spl_token_2022::{extension::ExtensionType, pod::PodMint},
+        MintTo,
+    },
+    token_interface::{
+        interest_bearing_mint_initialize, InterestBearingMintInitialize, Mint, TokenAccount,
+        TokenInterface,
+    },
 };
 
 use crate::{error::LittleHomieError, CoinState, COIN_STATE_SEED};
@@ -95,8 +102,39 @@ impl<'info> InitCoin<'info> {
         Ok(())
     }
 
-    pub fn mint_to_user(&mut self, amount_for_user: u64) -> Result<()> {
+    pub fn mint_to_user(&mut self, amount_for_user: u64, rate: i16) -> Result<()> {
         msg!("Minting to user");
+
+        let mint_size = ExtensionType::try_calculate_account_len::<PodMint>(&[
+            ExtensionType::InterestBearingConfig,
+        ])?;
+
+        let lamports = (Rent::get()?).minimum_balance(mint_size);
+
+        create_account(
+            CpiContext::new(
+                self.system_program.to_account_info(),
+                CreateAccount {
+                    from: self.payer.to_account_info(),
+                    to: self.coin_mint.to_account_info(),
+                },
+            ),
+            lamports,                  // Lamports
+            mint_size as u64,          // Space
+            &self.token_program.key(), // Owner Program
+        )?;
+
+        interest_bearing_mint_initialize(
+            CpiContext::new(
+                self.token_program.to_account_info(),
+                InterestBearingMintInitialize {
+                    token_program_id: self.token_program.to_account_info(),
+                    mint: self.coin_mint.to_account_info(),
+                },
+            ),
+            Some(self.payer.key()),
+            rate,
+        )?;
 
         let mint_accounts_user = MintTo {
             mint: self.coin_mint.to_account_info(),
