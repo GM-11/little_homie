@@ -7,12 +7,11 @@
         walletStore,
         type WalletStore,
     } from "@svelte-on-solana/wallet-adapter-core";
+    import idl from "$lib/idl/little_homie.json";
 
-    export let idl: any,
-        network: string,
+    export let network: string,
         config: Commitment | ConnectionConfig | undefined = "processed";
 
-    const { PublicKey } = web3;
     const baseAccount = web3.Keypair.generate();
     const systemProgram = web3.SystemProgram;
     const connection = new Connection(network, config);
